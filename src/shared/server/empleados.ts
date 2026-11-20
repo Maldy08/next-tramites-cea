@@ -13,7 +13,7 @@ interface EmpleadoCea {
 }
 
 /**
- * El supervisor (TRAMITES_NIVEL >= 2) opera a sus compañeros a cargo (EMPLEADOS.SUPERVISOR_ID = él) y, como
+ * El supervisor (TRAMITES_NIVEL 2 o 3) opera a sus compañeros a cargo (EMPLEADOS.SUPERVISOR_ID = él) y, como
  * suplencia, a cualquier empleado con supervisor asignado de su mismo DEPTOCOMI. `empleado` = ficha del beneficiario.
  */
 export const supervisaA = async (
@@ -35,7 +35,7 @@ export const puedeOperarEmpleado = async (user: SessionUser, noEmp: number): Pro
   return !!empleado && supervisaA(user, empleado);
 };
 
-// GET /api/companeros?alcance=mios|departamento (ver shared/empleados.ts). Solo TRAMITES_NIVEL >= 2.
+// GET /api/companeros?alcance=mios|departamento (ver shared/empleados.ts). Solo TRAMITES_NIVEL 2 o 3.
 // El backend no filtra por supervisor: se trae la lista de empleados activos y se filtra aquí.
 export async function GET(req: NextRequest) {
   const user = await getUser();

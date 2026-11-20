@@ -62,7 +62,7 @@ const OpcionCompanero = ({ c }: { c: Companero }) => (
 
 /**
  * Pasos de Generar Nuevo Trámite (mockup): 1) para quién, 2) tipo de trámite, 3) captura del tipo elegido.
- * Paso 1: todos pueden hacer "Mi Trámite Personal"; el supervisor (TRAMITES_NIVEL >= 2) además
+ * Paso 1: todos pueden hacer "Mi Trámite Personal"; el supervisor (TRAMITES_NIVEL 2 o 3) además
  * "En Representación de un Compañero": sus compañeros a cargo o, como suplencia, los de su departamento
  * (/api/companeros, ver shared/empleados.ts).
  */

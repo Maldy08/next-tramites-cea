@@ -31,7 +31,7 @@ Reglas (las hace cumplir ESLint, ver eslint.config.mjs):
 - Un módulo no importa de otro módulo, ni de `app/`, ni de `registry.ts`.
 - Las APIs de un módulo viven bajo `/api/<id>/...` y empiezan con `usuarioDeModulo("<id>")` (shared/server/cea.ts).
   Excepción del portal: `/api/companeros` (shared/server/empleados.ts) = empleados con `SUPERVISOR_ID` = el usuario,
-  solo para `TRAMITES_NIVEL >= 2` (supervisor, ver shared/empleados.ts). Los módulos dejan operar a esos empleados
+  solo para `TRAMITES_NIVEL 2 o 3` (supervisor, ver shared/empleados.ts). Los módulos dejan operar a esos empleados
   con `puedeOperarEmpleado`/`supervisaA` de shared/server/empleados.ts (viaticos/server/acceso.ts le suma su nivel 9).
 - Los controladores de `CEA` NO tienen `[Authorize]`: la autorización fina (qué registros puede ver cada usuario) va en `modules/<id>/server/`.
 - El estado de trabajo del módulo va en zustand con sessionStorage y llave `tramites-cea:<id>`.
@@ -42,6 +42,14 @@ Reglas (las hace cumplir ESLint, ver eslint.config.mjs):
   "Expedientes Institucionales CEA" (/rh/tramites, `modules/rh`, NO está en MODULOS): todos los trámites de NOM_TRAMITES
   (sin viáticos) en cualquier estatus, con Modificar / Autorizar / Cancelar (backend api/NomTramitesRh, que revisa el
   nivel con el usuario del token). proxy.ts protege /rh; sus APIs /api/rh usan `usuarioRh`, no `usuarioDeModulo`.
+  También "Saldos de Vacaciones" (/rh/saldos): punto de partida de F_SALDO_VACACIONES por empleado (último periodo +
+  días que le quedan + fecha de corte), guardado en NOM_VACAEMP_M con ORIGEN_REGISTRO 'R' (sin trámite) + un D.
+  Autorizar de RH aplica en 2, 3 o 4 (ya enviado a firma, falten o no firmas) → 100; no en Creado (1) ni Regresado (98).
+  Igual, `TRAMITES_NIVEL 3` (jefes y directores, `esFirmante`) ve "Trámites por Firmar" (/firmas, `modules/firmas`, NO
+  en MODULOS): trámites en estatus 2 con VALIDA_1 = él o 3 con VALIDA_2 = él; Firmar (2→3, 3→4) o Regresar (→98, motivo).
+  Backend api/NomTramitesFirmas; proxy.ts protege /firmas; sus APIs /api/firmas usan `usuarioFirmante`.
+- `TRAMITES_NIVEL` es un rol EXACTO (nunca comparar con >=): 0/1 empleado, 2 supervisor, 3 firmante, 9 admin RH.
+  Representar a otros = 2 y 3 (`esSupervisor`); validar/autorizar = 3 (sus firmas) y 9 (RH).
 
 ## Cómo agregar un trámite nuevo
 

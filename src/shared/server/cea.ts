@@ -54,9 +54,34 @@ export const errorResponse = (error: unknown) => {
   return NextResponse.json(fail(message), { status });
 };
 
+/** Todos los textos (a cualquier profundidad) en mayúsculas; números, booleanos y null quedan igual. */
+const enMayusculas = (valor: unknown): unknown =>
+  typeof valor === "string"
+    ? valor.toLocaleUpperCase("es-MX")
+    : Array.isArray(valor)
+      ? valor.map(enMayusculas)
+      : valor && typeof valor === "object"
+        ? Object.fromEntries(Object.entries(valor).map(([k, v]) => [k, enMayusculas(v)]))
+        : valor;
+
+/**
+ * Regla del sistema: todo lo capturado se guarda en MAYÚSCULAS. Aquí pasan todas las escrituras (POST/PUT/PATCH con
+ * cuerpo JSON) hacia el backend CEA, así ningún módulo tiene que acordarse. Las fechas ISO no cambian ("T" ya es
+ * mayúscula). El login no pasa por aquí (auth.ts), así que la contraseña no se toca.
+ */
+const cuerpoEnMayusculas = (init?: RequestInit): RequestInit | undefined => {
+  const metodo = (init?.method ?? "GET").toUpperCase();
+  if (typeof init?.body !== "string" || !["POST", "PUT", "PATCH"].includes(metodo)) return init;
+  try {
+    return { ...init, body: JSON.stringify(enMayusculas(JSON.parse(init.body))) };
+  } catch {
+    return init;
+  }
+};
+
 export const ceaFetch = (user: SessionUser, path: string, init?: RequestInit) =>
   fetch(`${API}${path}`, {
-    ...init,
+    ...cuerpoEnMayusculas(init),
     cache: "no-store",
     headers: {
       Authorization: `Bearer ${user.token}`,

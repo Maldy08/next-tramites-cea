@@ -15,7 +15,7 @@ export const esAdminViaticos = (user: SessionUser) => esNivelAdmin(user.permisos
 /**
  * Un usuario trabaja sus propios viáticos y, además:
  * - el nivel 9 de viáticos, los de los empleados de su departamento (mismo criterio que GetEmpleadosByDeptoComi);
- * - el supervisor (TRAMITES_NIVEL >= 2), los de sus compañeros a cargo (EMPLEADOS.SUPERVISOR_ID = él) y, como
+ * - el supervisor (TRAMITES_NIVEL 2 o 3), los de sus compañeros a cargo (EMPLEADOS.SUPERVISOR_ID = él) y, como
  *   suplencia, los de cualquier empleado con supervisor asignado de su mismo DEPTOCOMI (shared/server/empleados.ts).
  */
 export const puedeOperarEmpleado = async (user: SessionUser, noEmp: number): Promise<boolean> => {

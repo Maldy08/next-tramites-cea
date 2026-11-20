@@ -172,7 +172,13 @@ export const CapturaVacaciones: CapturaTramite = ({ empleado: noEmp }) => {
         {estatusCreada === ESTATUS_TRAMITE.creado ? (
           <p className="text-sm text-emerald-900">Quedó como <strong>Creado</strong>. Envíala a firma cuando esté lista.</p>
         ) : (
-          <p className="text-sm font-semibold text-emerald-900">Enviada a firma del jefe.</p>
+          <p className="text-sm font-semibold text-emerald-900">
+            {estatusCreada === ESTATUS_TRAMITE.revisionRh
+              ? "Enviada a Recursos Humanos."
+              : estatusCreada === ESTATUS_TRAMITE.revisionDirector
+                ? "Enviada a firma del director."
+                : "Enviada a firma del jefe."}
+          </p>
         )}
         <div className="flex flex-wrap items-center justify-center gap-3">
           <AccionesSolicitud

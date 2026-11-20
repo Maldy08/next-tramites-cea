@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { moduloDeRuta } from "@/modules/registry";
-import { esAdministradorRh } from "@/shared/empleados";
+import { esAdministradorRh, esFirmante } from "@/shared/empleados";
 import { nivelEnModulo } from "@/shared/modulos";
 
 // Toda página (menos login) requiere sesión, y cada módulo requiere su permiso.
@@ -16,6 +16,11 @@ export const proxy = auth((req) => {
 
   // Administración de RH (/rh/...): solo TRAMITES_NIVEL 9.
   if ((pathname === "/rh" || pathname.startsWith("/rh/")) && !esAdministradorRh(req.auth.user?.tramitesNivel)) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  // Trámites por Firmar (/firmas): solo TRAMITES_NIVEL 3 (jefes y directores).
+  if ((pathname === "/firmas" || pathname.startsWith("/firmas/")) && !esFirmante(req.auth.user?.tramitesNivel)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 

@@ -38,7 +38,15 @@ export const AccionesSolicitud = ({
     setOcupado(true);
     try {
       const nuevo = await accionSolicitud(idTramite, { accion, comentarios: accion === "cancelar" ? motivo.trim() : null });
-      toast.success(accion === "enviar" ? `${folio} enviado a firma del jefe` : `${folio} cancelado`);
+      toast.success(
+        accion === "cancelar"
+          ? `${folio} cancelado`
+          : nuevo === ESTATUS_TRAMITE.revisionRh
+            ? `${folio} enviado a Recursos Humanos`
+            : nuevo === ESTATUS_TRAMITE.revisionDirector
+              ? `${folio} enviado a firma del director`
+              : `${folio} enviado a firma del jefe`
+      );
       setCancelando(false);
       alCambiar(nuevo);
     } catch (e) {

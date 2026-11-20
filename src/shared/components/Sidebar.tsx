@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IoAddCircleOutline, IoCloseOutline, IoFileTrayFullOutline, IoLibraryOutline, IoSpeedometerOutline } from "react-icons/io5";
+import { IoAddCircleOutline, IoCloseOutline, IoCreateOutline, IoFileTrayFullOutline, IoLibraryOutline, IoSpeedometerOutline, IoWalletOutline } from "react-icons/io5";
 import { useUiStore } from "@/shared/store/useUiStore";
 import { LogoutButton } from "./LogoutButton";
 import { SelectorEjercicio } from "./SelectorEjercicio";
@@ -52,9 +52,18 @@ const Seccion = ({ nombre, primera }: { nombre: string; primera?: boolean }) => 
 /**
  * Menú lateral del sistema (perfil Empleado del mockup): Tablero, Generar Nuevo Trámite y Expedientes.
  * `rutasNuevoTramite` = acciones principales de los módulos (modules/registry), para marcar "Generar" activo en ellas.
+ * `firmante` (TRAMITES_NIVEL 3, jefes y directores) agrega "Trámites por Firmar".
  * `administradorRh` (TRAMITES_NIVEL 9) agrega "Expedientes Institucionales CEA" (perfil Mesa Control RH del mockup).
  */
-export const Sidebar = ({ rutasNuevoTramite, administradorRh = false }: { rutasNuevoTramite: string[]; administradorRh?: boolean }) => {
+export const Sidebar = ({
+  rutasNuevoTramite,
+  administradorRh = false,
+  firmante = false,
+}: {
+  rutasNuevoTramite: string[];
+  administradorRh?: boolean;
+  firmante?: boolean;
+}) => {
   const { sidebarAbierto, setSidebarAbierto } = useUiStore();
   const cerrar = () => setSidebarAbierto(false);
 
@@ -109,12 +118,30 @@ export const Sidebar = ({ rutasNuevoTramite, administradorRh = false }: { rutasN
 
           <Seccion nombre="Expedientes" />
           <SidebarItem href="/expedientes" icono={<IoFileTrayFullOutline />} label="Mis Trámites Solicitados" onNavigate={cerrar} />
+          {firmante && (
+            <SidebarItem
+              href="/firmas"
+              icono={<IoCreateOutline />}
+              colorIcono="text-sky-400"
+              label="Trámites por Firmar"
+              onNavigate={cerrar}
+            />
+          )}
           {administradorRh && (
             <SidebarItem
               href="/rh/tramites"
               icono={<IoLibraryOutline />}
               colorIcono="text-rose-400"
               label="Expedientes Institucionales CEA"
+              onNavigate={cerrar}
+            />
+          )}
+          {administradorRh && (
+            <SidebarItem
+              href="/rh/saldos"
+              icono={<IoWalletOutline />}
+              colorIcono="text-rose-400"
+              label="Saldos de Vacaciones"
               onNavigate={cerrar}
             />
           )}

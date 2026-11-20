@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { rutasNuevoTramite } from "@/modules/registry";
-import { esAdministradorRh } from "@/shared/empleados";
+import { esAdministradorRh, esFirmante } from "@/shared/empleados";
 import { EstadoSesion, Footer, Header, Sidebar, Toaster } from "@/shared/components";
 
 // Shell común a todos los módulos: sidebar armado desde el registro, header institucional,
@@ -12,9 +12,13 @@ export default async function SistemaLayout({ children }: { children: React.Reac
   const u = session.user;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800">
+    <div className="captura-mayusculas min-h-screen bg-slate-100 text-slate-800">
       <EstadoSesion userId={u?.idUsuario} />
-      <Sidebar rutasNuevoTramite={rutasNuevoTramite(u?.permisos)} administradorRh={esAdministradorRh(u?.tramitesNivel)} />
+      <Sidebar
+        rutasNuevoTramite={rutasNuevoTramite(u?.permisos)}
+        administradorRh={esAdministradorRh(u?.tramitesNivel)}
+        firmante={esFirmante(u?.tramitesNivel)}
+      />
       {/* min-w-0 en toda la cadena flex: sin esto el contenido ancho desborda la página en móvil. */}
       <div className="flex h-screen min-w-0 flex-col lg:pl-72">
         <Header />

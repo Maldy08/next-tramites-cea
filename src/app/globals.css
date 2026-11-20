@@ -38,3 +38,16 @@
     100% { opacity: 0; }
   }
 }
+
+/* Regla del sistema: lo que se captura se ve (y se guarda, ver shared/server/cea.ts → ceaFetch) en MAYÚSCULAS.
+   Solo dentro del shell (sistema)/layout.tsx; el login queda fuera. Las pistas (placeholder) se ven normales. */
+@layer base {
+  .captura-mayusculas input:not([type="password"]):not([type="email"]),
+  .captura-mayusculas textarea {
+    text-transform: uppercase;
+  }
+  .captura-mayusculas input::placeholder,
+  .captura-mayusculas textarea::placeholder {
+    text-transform: none;
+  }
+}

@@ -137,7 +137,13 @@ export const CapturaPermisos: CapturaTramite = ({ empleado: noEmp }) => {
         {estatusCreado === ESTATUS_TRAMITE.creado ? (
           <p className="text-sm text-blue-900">Quedó como <strong>Creado</strong>. Envíalo a firma cuando esté listo.</p>
         ) : (
-          <p className="text-sm font-semibold text-blue-900">Enviado a firma del jefe.</p>
+          <p className="text-sm font-semibold text-blue-900">
+            {estatusCreado === ESTATUS_TRAMITE.revisionRh
+              ? "Enviado a Recursos Humanos."
+              : estatusCreado === ESTATUS_TRAMITE.revisionDirector
+                ? "Enviado a firma del director."
+                : "Enviado a firma del jefe."}
+          </p>
         )}
         <div className="flex flex-wrap items-center justify-center gap-3">
           <AccionesSolicitud

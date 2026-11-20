@@ -3,15 +3,26 @@
 // - "departamento" (suplencia, p. ej. otro supervisor de vacaciones): empleados CON supervisor asignado del mismo
 //   EMPLEADOS.DEPTOCOMI que el usuario (el de su ficha de empleado, no USUARIOS.DEPTO).
 
-/** USUARIOS.TRAMITES_NIVEL desde el cual el usuario tiene gente a su cargo (supervisores). */
+// USUARIOS.TRAMITES_NIVEL: cada nivel es un ROL EXACTO (no jerárquico; se compara por lista, nunca con >=).
+//   0/1 = empleado normal, 2 = supervisor, 3 = firmante (jefe/director: VALIDA_1/VALIDA_2), 9 = administrador de RH.
+//   Hacer trámites de otros (En Representación): 2 y 3. Validar/autorizar: 3 (los suyos) y 9 (RH).
+
+/** Supervisor: tiene gente a su cargo (EMPLEADOS.SUPERVISOR_ID = él) y hace trámites en su representación. */
 export const NIVEL_SUPERVISOR = 2;
 
-export const esSupervisor = (tramitesNivel?: number | null) => (tramitesNivel ?? 0) >= NIVEL_SUPERVISOR;
+/** Firmante: jefe o director que valida trámites (NOM_TRAMITES.VALIDA_1 / VALIDA_2). */
+export const NIVEL_FIRMANTE = 3;
 
-/** USUARIOS.TRAMITES_NIVEL del administrador de RH: ve y opera todos los trámites de NOM_TRAMITES (/rh/tramites). */
+/** Puede hacer trámites en representación de compañeros (supervisor o firmante). */
+export const esSupervisor = (tramitesNivel?: number | null) =>
+  tramitesNivel === NIVEL_SUPERVISOR || tramitesNivel === NIVEL_FIRMANTE;
+
+export const esFirmante = (tramitesNivel?: number | null) => tramitesNivel === NIVEL_FIRMANTE;
+
+/** Administrador de RH: ve y opera todos los trámites de NOM_TRAMITES (/rh/tramites). */
 export const NIVEL_ADMIN_RH = 9;
 
-export const esAdministradorRh = (tramitesNivel?: number | null) => (tramitesNivel ?? 0) >= NIVEL_ADMIN_RH;
+export const esAdministradorRh = (tramitesNivel?: number | null) => tramitesNivel === NIVEL_ADMIN_RH;
 
 export type AlcanceCompaneros = "mios" | "departamento";
 

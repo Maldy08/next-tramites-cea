@@ -21,6 +21,9 @@ import { ModificarTramite } from "./ModificarTramite";
 
 const POR_PAGINA = 15;
 
+/** RH autoriza en cuanto el empleado lo envió a firma (2, 3 o 4), falten o no firmas. No en Creado ni Regresado. */
+const AUTORIZABLES: number[] = [ESTATUS_TRAMITE.revisionJefe, ESTATUS_TRAMITE.revisionDirector, ESTATUS_TRAMITE.revisionRh];
+
 const TONOS: Record<TonoEstatus, string> = {
   info: "bg-sky-100 text-sky-800",
   alerta: "bg-amber-100 text-amber-900",
@@ -31,7 +34,7 @@ const TONOS: Record<TonoEstatus, string> = {
 };
 
 const botonCls =
-  "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition disabled:opacity-50";
+  "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-1.5 text-xs font-semibold transition disabled:opacity-50";
 
 const ddmmaaaa = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
 const hhmi = (iso: string | null) => (iso && iso.slice(11, 16) !== "00:00" ? ` ${iso.slice(11, 16)}` : "");
@@ -51,7 +54,7 @@ type Accion = { tramite: TramiteRh; tipo: "completar" | "cancelar" | "modificar"
 
 /**
  * Expedientes Institucionales CEA (perfil "Mesa Control RH" del mockup): todos los trámites de vacaciones, permisos y
- * justificantes del ejercicio, en cualquier estatus, con Modificar, Autorizar (completar → 100) y Cancelar (→ 99).
+ * justificantes del ejercicio, en cualquier estatus, con Modificar, Autorizar (2/3/4 → 100) y Cancelar (→ 99).
  */
 export const AdministracionTramites = () => {
   const { ejercicio, hidratado } = useEjercicioStore();
@@ -230,7 +233,7 @@ export const AdministracionTramites = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3.5">
-                          <div className="flex flex-wrap justify-center gap-2">
+                          <div className="flex justify-center gap-2">
                             <a
                               href={`/formato/${t.idTramite}`}
                               target="_blank"
@@ -249,11 +252,11 @@ export const AdministracionTramites = () => {
                                 <IoCreateOutline className="h-4 w-4" /> Modificar
                               </button>
                             )}
-                            {!cancelado && t.estatus !== ESTATUS_TRAMITE.autorizado && (
+                            {AUTORIZABLES.includes(t.estatus) && (
                               <button
                                 type="button"
                                 onClick={() => abrir(t, "completar")}
-                                title="Marcar como Autorizado sin esperar firmas"
+                                title="Autorizar (aunque falten firmas del jefe o del director)"
                                 className={`${botonCls} border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800`}
                               >
                                 <IoCheckmarkDoneOutline className="h-4 w-4" /> Autorizar
@@ -335,7 +338,9 @@ export const AdministracionTramites = () => {
                 {accion.tramite.nombreEmpleado ?? `Empleado ${accion.tramite.idEmpleado}`} ·{" "}
                 {estatusTramite(accion.tramite.estatus).etiqueta}.{" "}
                 {accion.tipo === "completar"
-                  ? "Queda como Autorizado sin esperar las firmas pendientes."
+                  ? accion.tramite.estatus === ESTATUS_TRAMITE.revisionRh
+                    ? "Ya lo firmaron el jefe y el director; queda como Autorizado."
+                    : "Queda como Autorizado sin esperar las firmas pendientes."
                   : accion.tramite.tipoTramite === 1
                     ? "Los días regresan al saldo del empleado. No se puede deshacer."
                     : "No se puede deshacer."}

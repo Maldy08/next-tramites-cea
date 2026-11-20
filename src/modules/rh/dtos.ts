@@ -62,3 +62,46 @@ export type ModificarRh =
       justificacionMotivo: string;
       comentarios: string;
     };
+
+// ---- Saldos de vacaciones (punto de partida de F_SALDO_VACACIONES; api/NomTramitesRh/SaldosVacaciones) ----
+
+/** SaldoVacacionesRhDto: empleado activo con su saldo y el último registro de NOM_VACAEMP_M/_D. */
+export interface SaldoVacacionesRh {
+  empleado: number;
+  nombreCompleto: string;
+  departamento: string | null;
+  fechaAlta: string;
+  antiguedadAnos: number;
+  anoDisponible: number | null;
+  periodoDisponible: number | null;
+  diasPorDisfrutar: number | null;
+  diasTotales: number;
+  /** "T" trámite / "R" capturado por RH / null = sin punto de partida (F_SALDO cuenta desde el año de alta). */
+  ultimoOrigen: "T" | "R" | null;
+  ultimoFolio: string | null;
+  ultimoPerVac: string | null;
+  ultimoDiasXDisf: number | null;
+  ultimaFecha: string | null;
+}
+
+/** RegistroVacacionesRhDto: historial M/D del empleado. */
+export interface RegistroVacacionesRh {
+  idVacaemp: number;
+  origen: "T" | "R";
+  idTramite: number | null;
+  folio: string | null;
+  estatus: number | null;
+  fDesde: string;
+  fHasta: string;
+  diasSolicitados: number;
+  perVac: string | null;
+  diasXDisf: number | null;
+  idEmpleadoCaptura: number | null;
+  fechaCaptura: string | null;
+}
+
+/** POST /api/rh/saldos/[noEmp]. perVac "AAAA-N". La fecha del registro la pone el backend (el día de la captura). */
+export interface SaldoInicialRh {
+  perVac: string;
+  diasXDisf: number;
+}
