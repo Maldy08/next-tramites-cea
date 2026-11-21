@@ -15,9 +15,9 @@ import type { TonoEstatus } from "@/shared/expedientes";
 import { useEjercicioStore } from "@/shared/store/useEjercicioStore";
 import { toast } from "@/shared/store/useToast";
 import { ESTATUS_TRAMITE, INCIDENCIAS, estatusTramite } from "@/shared/tramites";
-import { accionTramite, getTramites } from "@/modules/rh/data-access";
+import { accionTramite, getTramite, getTramites, modificarTramite } from "@/modules/rh/data-access";
 import { TIPOS_RH, type TramiteRh } from "@/modules/rh/dtos";
-import { ModificarTramite } from "./ModificarTramite";
+import { ModificarTramite } from "@/shared/components/ModificarTramite";
 
 const POR_PAGINA = 15;
 
@@ -319,6 +319,9 @@ export const AdministracionTramites = () => {
       {accion?.tipo === "modificar" && (
         <ModificarTramite
           idTramite={accion.tramite.idTramite}
+          cargar={getTramite}
+          guardar={modificarTramite}
+          motivoObligatorio
           alCerrar={() => setAccion(null)}
           alGuardar={() => {
             setAccion(null);

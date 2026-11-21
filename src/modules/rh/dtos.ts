@@ -1,5 +1,11 @@
 // DTOs de la Administración de Trámites de RH (backend CEA api/NomTramitesRh). Solo TRAMITES_NIVEL 9.
-import type { Tramite } from "@/shared/tramites";
+import type {
+  DetalleTramite,
+  ModificarTramiteCuerpo,
+  PermisoJustificanteDetalle,
+  Tramite,
+  VacacionesDetalle,
+} from "@/shared/tramites";
 
 /** Tipos de NOM_TRAMITES que administra RH (viáticos va aparte). */
 export const TIPOS_RH = [
@@ -17,33 +23,10 @@ export interface TramiteRh extends Tramite {
   tipoIncidencia: number | null;
 }
 
-/** SolicitudVacacionesDto (lo que se edita). */
-export interface VacacionesRh {
-  idVacaemp: number;
-  diasSolicitados: number;
-  fDesde: string;
-  fHasta: string;
-  fechaRegreso: string | null;
-  idEmpleadoCubre: number | null;
-}
-
-/** PermisoJustificanteDto. */
-export interface PermisoJustificanteRh {
-  idPermisoJustificante: number;
-  tipoIncidencia: number;
-  fechaInicio: string;
-  fechaFin: string;
-  justificacionMotivo: string;
-  idEmpleadoCubre: number | null;
-}
-
-/** DetalleTramiteRhDto. */
-export interface DetalleTramiteRh {
-  tramite: Tramite;
-  nombreEmpleado: string | null;
-  vacaciones: VacacionesRh | null;
-  permisoJustificante: PermisoJustificanteRh | null;
-}
+// Detalle y edición: tipos compartidos con la edición del empleado (shared/tramites.ts).
+export type VacacionesRh = VacacionesDetalle;
+export type PermisoJustificanteRh = PermisoJustificanteDetalle;
+export type DetalleTramiteRh = DetalleTramite;
 
 /** POST /api/rh/tramite/[idTramite]. */
 export interface AccionRh {
@@ -51,17 +34,8 @@ export interface AccionRh {
   comentarios?: string | null;
 }
 
-/** PUT /api/rh/tramite/[idTramite]: según el tipo del trámite. Fechas AAAA-MM-DD o AAAA-MM-DDTHH:MI. */
-export type ModificarRh =
-  | { tipo: "vacaciones"; desde: string; hasta: string; fechaRegreso: string | null; comentarios: string }
-  | {
-      tipo: "permisoJustificante";
-      tipoIncidencia: number;
-      fechaInicio: string;
-      fechaFin: string;
-      justificacionMotivo: string;
-      comentarios: string;
-    };
+/** PUT /api/rh/tramite/[idTramite]: según el tipo del trámite (motivo obligatorio para RH). */
+export type ModificarRh = ModificarTramiteCuerpo;
 
 // ---- Saldos de vacaciones (punto de partida de F_SALDO_VACACIONES; api/NomTramitesRh/SaldosVacaciones) ----
 

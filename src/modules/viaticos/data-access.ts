@@ -7,6 +7,7 @@ import type {
   GuardarViaticoRequest,
   GuardarViaticoResponse,
   Viatico,
+  ViaticoCapturado,
   ViaticoListado,
 } from "@/modules/viaticos/dtos";
 
@@ -20,6 +21,10 @@ export const getEmpleadoById = async (id: number): Promise<Empleado> =>
 
 export const getEmpleadosDepartamento = async (): Promise<Empleado[]> =>
   (await DbAdapter.get<Result<Empleado[]>>("viaticos/empleados/departamento")).data;
+
+/** Viáticos que el supervisor capturó para otros empleados (Bandeja → "Capturados por mí"). */
+export const getViaticosCapturados = async (ejercicio: number): Promise<ViaticoCapturado[]> =>
+  (await DbAdapter.get<Result<ViaticoCapturado[]>>(`viaticos/capturados/${ejercicio}`)).data;
 
 export const getViaticosByEmpleado = async (ejercicio: number, empleado: number): Promise<ViaticoListado[]> =>
   (await DbAdapter.get<Result<ViaticoListado[]>>(`viaticos/registros/empleado/${ejercicio}/${empleado}`)).data;

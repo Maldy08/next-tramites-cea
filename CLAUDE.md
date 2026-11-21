@@ -33,6 +33,14 @@ Reglas (las hace cumplir ESLint, ver eslint.config.mjs):
   Excepción del portal: `/api/companeros` (shared/server/empleados.ts) = empleados con `SUPERVISOR_ID` = el usuario,
   solo para `TRAMITES_NIVEL 2 o 3` (supervisor, ver shared/empleados.ts). Los módulos dejan operar a esos empleados
   con `puedeOperarEmpleado`/`supervisaA` de shared/server/empleados.ts (viaticos/server/acceso.ts le suma su nivel 9).
+  Otra excepción: `/api/personal/{tramites,capturados}` (shared/server/personal.ts), solo `TRAMITES_NIVEL 2`
+  (`tienePersonalACargo`): en la Bandeja el supervisor elige "Ver trámites de": Mis trámites / su personal a cargo
+  (`ExpedienteModulo.cargarPersonal`, o `cargar` por empleado) / "Capturados por mí" (`cargarCapturados`:
+  NOM_TRAMITES.ID_EMPLEADO_SUPERVISOR o VIATICOS.NOEMP_CREA = él, p. ej. suplencia). Opera (enviar, cancelar, editar),
+  no autoriza. El nivel 3 no tiene esta vista.
+  Editar (vacaciones/permisos/justificantes): el empleado o su supervisor, solo en Creado (1) o Regresado (98), botón en
+  `AccionesSolicitud` → modal compartido `shared/components/ModificarTramite.tsx` (el mismo de RH) → `/api/tramites/[idTramite]`
+  (shared/server/tramites.ts) → CEA `NomTramites/{id}/Detalle|Vacaciones|PermisoJustificante` (comandos de RH con PorEmpleado).
 - Los controladores de `CEA` NO tienen `[Authorize]`: la autorización fina (qué registros puede ver cada usuario) va en `modules/<id>/server/`.
 - El estado de trabajo del módulo va en zustand con sessionStorage y llave `tramites-cea:<id>`.
 - El **ejercicio fiscal es global** (`shared/store/useEjercicioStore`, selector en header y pie del sidebar). Los módulos lo leen de ahí y esperan `hidratado` antes de pedir datos; no deben tener su propio ejercicio.

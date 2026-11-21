@@ -25,5 +25,20 @@ export interface ExpedienteModulo {
    * Trámites del empleado en el ejercicio. `recargar` vuelve a pedir la bandeja: lo llaman las acciones de una fila
    * que cambian el trámite (enviar a firma, cancelar…).
    */
-  cargar: (ejercicio: number, empleado: { id: number; nombre: string }, recargar: () => void) => Promise<FilaExpediente[]>;
+  cargar: (ejercicio: number, empleado: EmpleadoExpediente, recargar: () => void) => Promise<FilaExpediente[]>;
+  /**
+   * Trámites de todo el personal a cargo del supervisor en una sola consulta. Opcional: si el módulo no lo tiene,
+   * la bandeja llama a `cargar` por cada empleado de `personal`.
+   */
+  cargarPersonal?: (ejercicio: number, personal: EmpleadoExpediente[], recargar: () => void) => Promise<FilaExpediente[]>;
+  /**
+   * Trámites que el supervisor capturó para otros empleados (p. ej. en suplencia de otro supervisor de su depto).
+   * Sin esta función el módulo no aporta nada a "Capturados por mí".
+   */
+  cargarCapturados?: (ejercicio: number, recargar: () => void) => Promise<FilaExpediente[]>;
+}
+
+export interface EmpleadoExpediente {
+  id: number;
+  nombre: string;
 }

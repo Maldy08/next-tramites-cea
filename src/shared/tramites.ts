@@ -60,6 +60,8 @@ export interface Tramite {
   /** NOEMP de quienes firman (NOM_TRAMITES.VALIDA_1 / VALIDA_2); null en trámites anteriores. */
   valida1: number | null;
   valida2: number | null;
+  /** Nombre del beneficiario; solo en las listas del supervisor (personal a cargo / capturados por mí). */
+  nombreEmpleado?: string | null;
   /** Solo viene llena en el detalle de un trámite; en listados va vacía. */
   bitacora: MovimientoTramite[];
 }
@@ -89,3 +91,48 @@ export const INCIDENCIAS: readonly { id: number; nombre: string; tipoTramite: nu
   { id: 6, nombre: "Justificación de no checada de salida", tipoTramite: TIPO_TRAMITE.justificantes, captura: "hora" },
   { id: 7, nombre: "Justificación de no checada (todo el día)", tipoTramite: TIPO_TRAMITE.justificantes, captura: "dia" },
 ];
+
+// ---- Edición de un trámite (RH en cualquier estatus; empleado o supervisor solo en Creado/Regresado) ----
+
+/** Estatus en que el empleado o su supervisor todavía pueden editar (mismo que ReglasRh.EditablesEmpleado). */
+export const EDITABLES_EMPLEADO: number[] = [ESTATUS_TRAMITE.creado, ESTATUS_TRAMITE.regresado];
+
+/** SolicitudVacacionesDto (lo que se edita). */
+export interface VacacionesDetalle {
+  idVacaemp: number;
+  diasSolicitados: number;
+  fDesde: string;
+  fHasta: string;
+  fechaRegreso: string | null;
+  idEmpleadoCubre: number | null;
+}
+
+/** PermisoJustificanteDto. */
+export interface PermisoJustificanteDetalle {
+  idPermisoJustificante: number;
+  tipoIncidencia: number;
+  fechaInicio: string;
+  fechaFin: string;
+  justificacionMotivo: string;
+  idEmpleadoCubre: number | null;
+}
+
+/** DetalleTramiteRhDto: trámite con bitácora y su detalle según el tipo. */
+export interface DetalleTramite {
+  tramite: Tramite;
+  nombreEmpleado: string | null;
+  vacaciones: VacacionesDetalle | null;
+  permisoJustificante: PermisoJustificanteDetalle | null;
+}
+
+/** Cuerpo del PUT de modificación según el tipo. Fechas AAAA-MM-DD o AAAA-MM-DDTHH:MI. El relevo se conserva. */
+export type ModificarTramiteCuerpo =
+  | { tipo: "vacaciones"; desde: string; hasta: string; fechaRegreso: string | null; comentarios: string }
+  | {
+      tipo: "permisoJustificante";
+      tipoIncidencia: number;
+      fechaInicio: string;
+      fechaFin: string;
+      justificacionMotivo: string;
+      comentarios: string;
+    };

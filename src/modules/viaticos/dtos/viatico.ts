@@ -39,6 +39,15 @@ export interface ViaticoListado {
   ejercicio: number;
 }
 
+/** ViaticoCapturadoDto: viático que el supervisor capturó para otro empleado (NOEMP_CREA = él). */
+export interface ViaticoCapturado {
+  oficina: number;
+  ejercicio: number;
+  noViat: number;
+  noEmp: number;
+  nombreEmpleado: string | null;
+}
+
 /**
  * Lo que manda el formulario (fechas "YYYY-MM-DD"). El proxy calcula folio, días, partida e
  * importe, y completa el empleado que captura y los valores fijos.

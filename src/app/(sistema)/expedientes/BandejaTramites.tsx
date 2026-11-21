@@ -13,10 +13,13 @@ import {
   IoSearchOutline,
 } from "react-icons/io5";
 import { EXPEDIENTES } from "@/modules/expedientes";
+import { DbAdapter } from "@/shared/adapters/db.adapter";
 import { Icono } from "@/shared/components/Iconos";
 import { TableSkeleton } from "@/shared/components/Skeletons";
 import { COLORES_MODULO } from "@/shared/components/coloresModulo";
-import type { FilaExpediente, TonoEstatus } from "@/shared/expedientes";
+import type { Result } from "@/shared/domain/result";
+import { type Companero, tienePersonalACargo } from "@/shared/empleados";
+import type { EmpleadoExpediente, ExpedienteModulo, FilaExpediente, TonoEstatus } from "@/shared/expedientes";
 import type { ColorModulo, IconoModulo } from "@/shared/modulos";
 import { useEjercicioStore } from "@/shared/store/useEjercicioStore";
 
@@ -31,6 +34,23 @@ type Fila = FilaExpediente & { tipoId: string; tipo: string };
 type Columna = "folio" | "fecha" | "titulo" | "beneficiario" | "estatus";
 
 const TODOS = "todos";
+/** Alcance de la bandeja: los míos, todo el personal a cargo, los capturados por mí o un empleado (su número como texto). */
+const MIOS = "mios";
+const PERSONAL = "personal";
+const CAPTURADOS = "capturados";
+
+/** Trámites de un módulo para el alcance elegido. */
+const cargarAlcance = async (
+  modulo: ExpedienteModulo,
+  ejercicio: number,
+  empleados: EmpleadoExpediente[],
+  todoElPersonal: boolean,
+  recargar: () => void
+): Promise<FilaExpediente[]> => {
+  if (!empleados.length) return [];
+  if (todoElPersonal && modulo.cargarPersonal) return modulo.cargarPersonal(ejercicio, empleados, recargar);
+  return (await Promise.all(empleados.map((e) => modulo.cargar(ejercicio, e, recargar)))).flat();
+};
 const POR_PAGINA = [5, 10, 25];
 
 const TONOS: Record<TonoEstatus, string> = {
@@ -60,12 +80,31 @@ const csv = (filas: Fila[]) => {
   return "﻿" + [encabezado.map(celda).join(","), ...renglones].join("\r\n");
 };
 
-/** Bandeja de Trámites y Seguimiento (mockup): los trámites propios de todos los módulos en una sola tabla. */
+/**
+ * Bandeja de Trámites y Seguimiento (mockup): los trámites propios de todos los módulos en una sola tabla.
+ * El supervisor (TRAMITES_NIVEL 2) también ve y opera los de su personal a cargo (EMPLEADOS.SUPERVISOR_ID = él).
+ */
 export const BandejaTramites = ({ tipos }: { tipos: TipoBandeja[] }) => {
   const { data: session } = useSession();
   const { ejercicio, hidratado } = useEjercicioStore();
   const empleadoId = session?.user?.idUsuario;
   const empleadoNombre = session?.user?.nombrecompleto ?? "";
+  const conPersonal = tienePersonalACargo(session?.user?.tramitesNivel);
+
+  const [alcance, setAlcance] = useState(MIOS);
+  // Personal a cargo (para el selector y los nombres de la columna Beneficiario); null = cargando.
+  const [personal, setPersonal] = useState<EmpleadoExpediente[] | null>(null);
+  useEffect(() => {
+    if (!conPersonal) return;
+    let vigente = true;
+    DbAdapter.get<Result<Companero[]>>("companeros?alcance=mios")
+      .then((r) => (r.data ?? []).map((c) => ({ id: c.empleado, nombre: c.nombreCompleto })))
+      .catch(() => [])
+      .then((lista) => vigente && setPersonal(lista));
+    return () => {
+      vigente = false;
+    };
+  }, [conPersonal]);
 
   const [tab, setTab] = useState(TODOS);
   const [busqueda, setBusqueda] = useState("");
@@ -75,7 +114,7 @@ export const BandejaTramites = ({ tipos }: { tipos: TipoBandeja[] }) => {
   const [orden, setOrden] = useState<{ columna: Columna; asc: boolean }>({ columna: "fecha", asc: false });
 
   // Resultado etiquetado con la consulta que lo produjo: si la clave cambió, se muestra "cargando".
-  const clave = `${ejercicio}-${empleadoId}`;
+  const clave = `${ejercicio}-${empleadoId}-${alcance}`;
   // Sube cuando una acción de fila cambia un trámite: vuelve a cargar sin vaciar la tabla (la clave no cambia).
   const [version, setVersion] = useState(0);
   const [resultado, setResultado] = useState<{ clave: string; filas: Fila[]; errores: string[] } | null>(null);
@@ -84,12 +123,23 @@ export const BandejaTramites = ({ tipos }: { tipos: TipoBandeja[] }) => {
 
   useEffect(() => {
     if (!hidratado || !empleadoId) return;
+    const deOtros = alcance !== MIOS && alcance !== CAPTURADOS;
+    if (deOtros && personal === null) return; // espera la lista del personal a cargo
+    const empleados: EmpleadoExpediente[] = !deOtros
+      ? [{ id: empleadoId, nombre: empleadoNombre }]
+      : alcance === PERSONAL
+        ? (personal ?? [])
+        : (personal ?? []).filter((p) => String(p.id) === alcance);
     let vigente = true;
+    const recargar = () => setVersion((v) => v + 1);
     Promise.allSettled(
       tipos.map((t) =>
-        EXPEDIENTES[t.id]
-          .cargar(ejercicio, { id: empleadoId, nombre: empleadoNombre }, () => setVersion((v) => v + 1))
-          .then((lista) => lista.map((f) => ({ ...f, tipoId: t.id, tipo: t.nombre })))
+        (alcance === CAPTURADOS
+          ? (EXPEDIENTES[t.id].cargarCapturados?.(ejercicio, recargar) ?? Promise.resolve([]))
+          : cargarAlcance(EXPEDIENTES[t.id], ejercicio, empleados, alcance === PERSONAL, recargar)
+        ).then((lista) =>
+          lista.map((f) => ({ ...f, tipoId: t.id, tipo: t.nombre }))
+        )
       )
     ).then((res) => {
       if (!vigente) return;
@@ -102,7 +152,7 @@ export const BandejaTramites = ({ tipos }: { tipos: TipoBandeja[] }) => {
     return () => {
       vigente = false;
     };
-  }, [hidratado, ejercicio, empleadoId, empleadoNombre, tipos, clave, version]);
+  }, [hidratado, ejercicio, empleadoId, empleadoNombre, tipos, clave, version, alcance, personal]);
 
   const conteo = useMemo(() => {
     const c: Record<string, number> = { [TODOS]: filas?.length ?? 0 };
@@ -132,6 +182,11 @@ export const BandejaTramites = ({ tipos }: { tipos: TipoBandeja[] }) => {
   const primera = Math.max(1, Math.min(paginaActual - 2, totalPaginas - 4));
   const paginas = Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => primera + i);
 
+  const cambiarAlcance = (valor: string) => {
+    setAlcance(valor);
+    setEstatus("");
+    setPagina(1);
+  };
   const cambiarTab = (id: string) => {
     setTab(id);
     setEstatus("");
@@ -187,6 +242,34 @@ export const BandejaTramites = ({ tipos }: { tipos: TipoBandeja[] }) => {
       </div>
 
       <div className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        {conPersonal && (
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 text-xs font-bold">
+            <span className="px-2 text-slate-500">Ver trámites de:</span>
+            <select
+              value={alcance}
+              onChange={(e) => cambiarAlcance(e.target.value)}
+              className="max-w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-slate-700"
+            >
+              <option value={MIOS}>Mis trámites</option>
+              {personal === null && <option disabled>Cargando personal…</option>}
+              {personal?.length === 0 && <option disabled>Sin personal a cargo</option>}
+              {!!personal?.length && (
+                <optgroup label="Mi personal a cargo">
+                  <option value={PERSONAL}>Todos ({personal.length})</option>
+                  {personal.map((p) => (
+                    <option key={p.id} value={String(p.id)}>
+                      {p.nombre} ({p.id})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label="Suplencia">
+                <option value={CAPTURADOS}>Capturados por mí</option>
+              </optgroup>
+            </select>
+          </div>
+        )}
+
         {/* Pestañas por tipo de trámite */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">

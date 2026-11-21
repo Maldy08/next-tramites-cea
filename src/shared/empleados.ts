@@ -17,6 +17,12 @@ export const NIVEL_FIRMANTE = 3;
 export const esSupervisor = (tramitesNivel?: number | null) =>
   tramitesNivel === NIVEL_SUPERVISOR || tramitesNivel === NIVEL_FIRMANTE;
 
+/**
+ * Bandeja "Mi personal a cargo" (/expedientes): solo el nivel 2 ve y opera (enviar, cancelar, editar; no autorizar)
+ * los trámites de los empleados con EMPLEADOS.SUPERVISOR_ID = él. El firmante (3) los ve hasta que se los envían a firma.
+ */
+export const tienePersonalACargo = (tramitesNivel?: number | null) => tramitesNivel === NIVEL_SUPERVISOR;
+
 export const esFirmante = (tramitesNivel?: number | null) => tramitesNivel === NIVEL_FIRMANTE;
 
 /** Administrador de RH: ve y opera todos los trámites de NOM_TRAMITES (/rh/tramites). */

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { IoBanOutline, IoPaperPlaneOutline } from "react-icons/io5";
+import { IoBanOutline, IoCreateOutline, IoPaperPlaneOutline } from "react-icons/io5";
+import { ModificarTramite } from "@/shared/components/ModificarTramite";
+import { getDetalleTramite, modificarTramite } from "@/shared/edicion";
 import { toast } from "@/shared/store/useToast";
-import { ESTATUS_TRAMITE } from "@/shared/tramites";
+import { EDITABLES_EMPLEADO, ESTATUS_TRAMITE } from "@/shared/tramites";
 import { accionSolicitud } from "@/modules/vacaciones/data-access";
 
 // Mismas reglas que el backend (EnviarTramiteCommand / CancelarTramiteCommand).
@@ -14,7 +16,7 @@ const botonCls =
   "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition disabled:opacity-50";
 
 /**
- * Acciones de una solicitud de vacaciones (Bandeja y pantalla de éxito de la captura): "Enviar a firma" (1/98 → 2)
+ * Acciones de una solicitud de vacaciones (Bandeja y pantalla de éxito de la captura): "Editar" (1/98), "Enviar a firma" (1/98 → 2)
  * y "Cancelar" (1/2/98 → 99, pide motivo). `alCambiar` recibe el estatus nuevo.
  */
 export const AccionesSolicitud = ({
@@ -32,6 +34,7 @@ export const AccionesSolicitud = ({
 }) => {
   const [ocupado, setOcupado] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+  const [editando, setEditando] = useState(false);
   const [motivo, setMotivo] = useState("");
 
   const ejecutar = async (accion: "enviar" | "cancelar") => {
@@ -58,10 +61,23 @@ export const AccionesSolicitud = ({
 
   const enviar = PUEDE_ENVIAR.includes(estatus);
   const cancelar = !soloEnviar && PUEDE_CANCELAR.includes(estatus);
-  if (!enviar && !cancelar) return null;
+  // Editar: antes de enviarlo a firma o si se lo regresaron (mismo candado en el backend).
+  const editar = !soloEnviar && EDITABLES_EMPLEADO.includes(estatus);
+  if (!enviar && !cancelar && !editar) return null;
 
   return (
     <>
+      {editar && (
+        <button
+          type="button"
+          disabled={ocupado}
+          onClick={() => setEditando(true)}
+          title="Modificar fechas o datos del trámite"
+          className={`${botonCls} border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
+        >
+          <IoCreateOutline className="h-4 w-4" /> Editar
+        </button>
+      )}
       {enviar && (
         <button
           type="button"
@@ -86,6 +102,20 @@ export const AccionesSolicitud = ({
         >
           <IoBanOutline className="h-4 w-4" /> Cancelar
         </button>
+      )}
+
+      {editando && (
+        <ModificarTramite
+          idTramite={idTramite}
+          cargar={getDetalleTramite}
+          guardar={modificarTramite}
+          motivoObligatorio={false}
+          alCerrar={() => setEditando(false)}
+          alGuardar={() => {
+            setEditando(false);
+            alCambiar(estatus);
+          }}
+        />
       )}
 
       {cancelando && (

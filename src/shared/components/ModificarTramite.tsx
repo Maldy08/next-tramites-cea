@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import { IoSaveOutline } from "react-icons/io5";
 import { toast } from "@/shared/store/useToast";
-import { INCIDENCIAS, TIPO_TRAMITE, estatusTramite } from "@/shared/tramites";
-import { getTramite, modificarTramite } from "@/modules/rh/data-access";
-import type { DetalleTramiteRh } from "@/modules/rh/dtos";
+import { type DetalleTramite, INCIDENCIAS, type ModificarTramiteCuerpo, TIPO_TRAMITE, estatusTramite } from "@/shared/tramites";
 
 const inputCls =
   "block w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#691c32] focus:ring-2 focus:ring-[#691c32]/20";
@@ -24,20 +22,28 @@ const Campo = ({ etiqueta, children }: { etiqueta: string; children: React.React
 );
 
 /**
- * Modal de RH para modificar un trámite en cualquier estatus (menos cancelado). Vacaciones: periodo y fecha de regreso
- * (el backend recalcula días y reparto por periodo). Permisos/justificantes: incidencia del mismo tipo, fechas/horas y
- * justificación. El relevo se conserva. Pide el motivo de la modificación (va a la bitácora).
+ * Modal para modificar un trámite. Vacaciones: periodo y fecha de regreso (el backend recalcula días y reparto por
+ * periodo). Permisos/justificantes: incidencia del mismo tipo, fechas/horas y justificación. El relevo se conserva.
+ * El motivo va a la bitácora. Lo usan RH (cualquier estatus, motivo obligatorio; modules/rh) y el empleado o su
+ * supervisor desde la Bandeja (solo Creado o Regresado, motivo opcional; shared/edicion.ts): `cargar`/`guardar`
+ * apuntan a cada API.
  */
 export const ModificarTramite = ({
   idTramite,
+  cargar,
+  guardar: enviar,
+  motivoObligatorio,
   alCerrar,
   alGuardar,
 }: {
   idTramite: number;
+  cargar: (idTramite: number) => Promise<DetalleTramite>;
+  guardar: (idTramite: number, cambios: ModificarTramiteCuerpo) => Promise<unknown>;
+  motivoObligatorio: boolean;
   alCerrar: () => void;
   alGuardar: () => void;
 }) => {
-  const [detalle, setDetalle] = useState<DetalleTramiteRh | null>(null);
+  const [detalle, setDetalle] = useState<DetalleTramite | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
@@ -57,7 +63,7 @@ export const ModificarTramite = ({
 
   useEffect(() => {
     let vigente = true;
-    getTramite(idTramite)
+    cargar(idTramite)
       .then((d) => {
         if (!vigente) return;
         setDetalle(d);
@@ -80,7 +86,7 @@ export const ModificarTramite = ({
     return () => {
       vigente = false;
     };
-  }, [idTramite]);
+  }, [idTramite, cargar]);
 
   const t = detalle?.tramite;
   const esVacaciones = t?.tipoTramite === TIPO_TRAMITE.vacaciones;
@@ -92,12 +98,12 @@ export const ModificarTramite = ({
     setOcupado(true);
     try {
       if (esVacaciones) {
-        await modificarTramite(t.idTramite, { tipo: "vacaciones", desde, hasta, fechaRegreso: regreso || null, comentarios: motivo });
+        await enviar(t.idTramite, { tipo: "vacaciones", desde, hasta, fechaRegreso: regreso || null, comentarios: motivo });
       } else {
         const inicio = captura === "dia" ? `${fecha}T00:00` : `${fecha}T${horaInicio}`;
         const fin =
           captura === "dia" ? `${fechaFin || fecha}T00:00` : captura === "hora" ? inicio : `${fecha}T${horaFin}`;
-        await modificarTramite(t.idTramite, {
+        await enviar(t.idTramite, {
           tipo: "permisoJustificante",
           tipoIncidencia: incidencia,
           fechaInicio: inicio,
@@ -116,7 +122,7 @@ export const ModificarTramite = ({
   };
 
   const completo =
-    !!motivo.trim() &&
+    (!motivoObligatorio || !!motivo.trim()) &&
     (esVacaciones
       ? !!desde && !!hasta
       : !!fecha && !!justificacion.trim() && (captura === "dia" || !!horaInicio) && (captura !== "rango" || !!horaFin));
@@ -203,7 +209,7 @@ export const ModificarTramite = ({
         )}
 
         {detalle && (
-          <Campo etiqueta="Motivo de la modificación *">
+          <Campo etiqueta={motivoObligatorio ? "Motivo de la modificación *" : "Comentarios de la modificación"}>
             <textarea rows={2} maxLength={1000} value={motivo} onChange={(e) => setMotivo(e.target.value)} className={inputCls} />
           </Campo>
         )}
