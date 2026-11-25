@@ -60,6 +60,9 @@ export interface Tramite {
   /** NOEMP de quienes firman (NOM_TRAMITES.VALIDA_1 / VALIDA_2); null en trámites anteriores. */
   valida1: number | null;
   valida2: number | null;
+  /** Nombres de VALIDA_1 / VALIDA_2; solo en el detalle. */
+  nombreValida1?: string | null;
+  nombreValida2?: string | null;
   /** Nombre del beneficiario; solo en las listas del supervisor (personal a cargo / capturados por mí). */
   nombreEmpleado?: string | null;
   /** Solo viene llena en el detalle de un trámite; en listados va vacía. */
@@ -72,6 +75,8 @@ export interface MovimientoTramite {
   fechaMovimiento: string;
   /** Quien hizo la acción. */
   idEmpleado: number;
+  /** Nombre de quien hizo la acción; solo en el detalle. */
+  nombreEmpleado?: string | null;
   /** Estatus en que quedó el trámite. */
   idEstatus: number;
   accion: string;

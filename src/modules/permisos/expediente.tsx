@@ -3,6 +3,7 @@
 // Permisos en la Bandeja de Trámites (/expedientes): trámites NOM_TRAMITES tipo 3 como FilaExpediente.
 // Los del personal a cargo y los capturados para otros (supervisor nivel 2) llegan en una sola consulta.
 import { IoPrintOutline } from "react-icons/io5";
+import { BotonBitacora } from "@/shared/components/BitacoraTramite";
 import type { EmpleadoExpediente, ExpedienteModulo, FilaExpediente } from "@/shared/expedientes";
 import { getTramitesCapturados, getTramitesPersonal } from "@/shared/personal";
 import { estatusTramite, TIPO_TRAMITE, type Tramite } from "@/shared/tramites";
@@ -27,6 +28,7 @@ const fila = (t: Tramite, empleado: EmpleadoExpediente, recargar: () => void): F
       >
         <IoPrintOutline className="h-4 w-4" /> Formato
       </a>
+      <BotonBitacora idTramite={t.idTramite} folio={t.folio} />
       <AccionesSolicitud idTramite={t.idTramite} folio={t.folio} estatus={t.estatus} alCambiar={recargar} />
     </>
   ),

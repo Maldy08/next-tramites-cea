@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IoSaveOutline } from "react-icons/io5";
+import { ListaBitacora } from "@/shared/components/BitacoraTramite";
 import { toast } from "@/shared/store/useToast";
 import { type DetalleTramite, INCIDENCIAS, type ModificarTramiteCuerpo, TIPO_TRAMITE, estatusTramite } from "@/shared/tramites";
 
@@ -12,7 +13,6 @@ const botonCls =
 
 const dia = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : "");
 const hora = (iso: string | null | undefined) => (iso ? iso.slice(11, 16) : "");
-const fechaHora = (iso: string) => `${iso.slice(0, 10).split("-").reverse().join("/")} ${iso.slice(11, 16)}`;
 
 const Campo = ({ etiqueta, children }: { etiqueta: string; children: React.ReactNode }) => (
   <label className="block">
@@ -217,15 +217,7 @@ export const ModificarTramite = ({
         {!!t?.bitacora?.length && (
           <div>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">Bitácora</p>
-            <ul className="space-y-1 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-              {t.bitacora.map((b) => (
-                <li key={b.idBitacora}>
-                  <span className="font-mono text-slate-500">{fechaHora(b.fechaMovimiento)}</span> · <b>{b.accion}</b> · No.{" "}
-                  {b.idEmpleado}
-                  {b.comentarios && <span className="block pl-4 text-slate-500">{b.comentarios}</span>}
-                </li>
-              ))}
-            </ul>
+            <ListaBitacora bitacora={t.bitacora} />
           </div>
         )}
 
