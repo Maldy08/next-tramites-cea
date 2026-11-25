@@ -4,6 +4,7 @@
 
 Portal único (Next.js 16) donde se van incorporando los subsistemas de trámites de la CEA.
 Backend: proyecto C# compartido `CEA` (`../CEA`). Puerto 3004.
+Reglas de negocio, roles, flujo de estatus, Oracle, endpoints y pendientes: [docs/CONTEXTO.md](docs/CONTEXTO.md) (leerlo al retomar).
 
 ## Arquitectura modular (respetarla siempre)
 
